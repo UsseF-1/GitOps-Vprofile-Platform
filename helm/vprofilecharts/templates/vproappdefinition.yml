@@ -1,0 +1,82 @@
+# ──────────────────────────────────────────────────────────────────
+# templates/vproappdefinition.yml — Kubernetes Deployment manifest
+# for the Vprofile Java/Tomcat application.
+#
+# The {{ .Values.appimage }} and {{ .Values.apptag }} variables are
+# injected at deploy time by the GitHub Actions workflow, ensuring
+# that each pipeline run deploys the exact image built in that run.
+# ──────────────────────────────────────────────────────────────────
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vproapp
+  namespace: default
+  labels:
+    app: vpro-app
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    managed-by: Helm
+spec:
+  # Start with 1 replica; scale horizontally with an HPA in production
+  replicas: {{ .Values.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: vpro-app
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # Allow 1 extra pod during rollout so traffic is never dropped
+      maxSurge: 1
+      maxUnavailable: 0
+
+  template:
+    metadata:
+      labels:
+        app: vpro-app
+        version: "{{ .Values.apptag }}"
+    spec:
+      # Use the ECR registry secret created by the CI/CD workflow
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: vproapp
+          # Full ECR image URI injected by the GitHub Actions workflow
+          image: "{{ .Values.appimage }}:{{ .Values.apptag }}"
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          # Readiness probe — pod only receives traffic when Tomcat is ready
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+
+          # Liveness probe — restart container if Tomcat stops responding
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          # Environment variables for database connectivity
+          # In production, use Kubernetes Secrets instead of plain env vars
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"

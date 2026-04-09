@@ -1,0 +1,33 @@
+# ──────────────────────────────────────────────────────────────────
+# templates/vproappservice.yml — Kubernetes Service for Vprofile app
+#
+# Type: ClusterIP — internal access only within the cluster.
+# External traffic is routed via the NGINX Ingress Controller
+# defined in vproingress.yaml, not via this service directly.
+# ──────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app
+  namespace: default
+  labels:
+    app: vpro-app
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    managed-by: Helm
+spec:
+  # ClusterIP: service is only reachable from within the cluster.
+  # The Ingress resource routes external traffic to this service.
+  type: {{ .Values.service.type }}
+
+  selector:
+    # Selects pods labeled app: vpro-app created by the Deployment above
+    app: vpro-app
+
+  ports:
+    - name: http
+      protocol: TCP
+      # Port the Service listens on (what Ingress talks to)
+      port: {{ .Values.service.port }}
+      # Port on the container (Tomcat default)
+      targetPort: {{ .Values.service.targetPort }}

@@ -1,0 +1,84 @@
+# =============================================================================
+# .gitignore — GitOps Vprofile Project
+# =============================================================================
+
+# ── Terraform ─────────────────────────────────────────────────────
+# Local state files — NEVER commit these; state lives in S3
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfstate.d/
+*.tfplan
+planfile
+crash.log
+crash.*.log
+
+# Terraform variable override files (contain secrets)
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# ── AWS ───────────────────────────────────────────────────────────
+# AWS credentials — NEVER commit
+.aws/
+aws-credentials
+*.pem
+*.key
+
+# ── Docker ────────────────────────────────────────────────────────
+# Local Docker build artifacts
+*.tar
+docker-compose.override.yml
+
+# ── Helm ──────────────────────────────────────────────────────────
+# Helm dependency charts (installed locally)
+helm/*/charts/
+helm/*/Chart.lock
+
+# ── Java / Maven ──────────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+
+# Maven build output
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# ── IDE / Editor ──────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Test output ───────────────────────────────────────────────────
+/tmp/*.tfplan
+test-results/
+coverage/
+.nyc_output/
+
+# ── Environment files ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── SSH Keys ──────────────────────────────────────────────────────
+*.pub
+id_rsa
+id_ed25519
+actions

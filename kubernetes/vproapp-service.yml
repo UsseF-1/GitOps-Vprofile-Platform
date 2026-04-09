@@ -1,0 +1,22 @@
+# ──────────────────────────────────────────────────────────────────
+# kubernetes/vproapp-service.yml
+# ClusterIP Service — internal access only.
+# External traffic is routed via the NGINX Ingress Controller.
+# ──────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app
+  namespace: default
+  labels:
+    app: vpro-app
+spec:
+  type: ClusterIP
+  selector:
+    app: vpro-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080

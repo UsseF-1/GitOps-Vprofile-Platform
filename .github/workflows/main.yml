@@ -1,0 +1,151 @@
+name: Vprofile Actions
+
+# Change to 'push' trigger on main branch to auto-deploy on code commit.
+# 'workflow_dispatch' allows manual triggering from the GitHub UI.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: vprofileapp
+  EKS_CLUSTER: vprofile-eks
+
+jobs:
+
+  # ════════════════════════════════════════════════════════════════
+  # JOB 1 — TEST
+  # Runs Maven unit tests + Checkstyle + SonarCloud analysis
+  # ════════════════════════════════════════════════════════════════
+  Testing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Run unit tests with Maven (Maven is pre-installed on ubuntu-latest)
+      - name: Run Maven Tests
+        run: mvn test
+
+      # Run Checkstyle for code style compliance
+      - name: Run Maven Checkstyle
+        run: mvn checkstyle:checkstyle
+
+      # Switch to Java 11 for SonarCloud compatibility
+      - name: Set Java 11 for SonarCloud Analysis
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      # Install SonarScanner CLI
+      - name: Setup SonarQube Scanner
+        uses: warchant/setup-sonar-scanner@v7
+
+      # Run the SonarScanner CLI to upload analysis to SonarCloud
+      - name: Run SonarCloud Analysis
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=${{ secrets.SONAR_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.sources=src/ \
+            -Dsonar.junit.reportsPath=target/surefire-reports/ \
+            -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+            -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml \
+            -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/
+
+      # Wait for SonarCloud Quality Gate result before proceeding
+      - name: SonarQube Quality Gate Check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
+
+  # ════════════════════════════════════════════════════════════════
+  # JOB 2 — BUILD & PUBLISH TO ECR
+  # Builds Docker image and pushes to Amazon ECR
+  # Only runs after Testing job succeeds
+  # ════════════════════════════════════════════════════════════════
+  BUILD_AND_PUBLISH:
+    needs: Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Build and push Docker image to Amazon ECR using appleboy action
+      - name: Build and Push Docker Image to ECR
+        uses: appleboy/docker-ecr-action@master
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          registry: ${{ secrets.REGISTRY }}
+          repo: ${{ env.ECR_REPOSITORY }}
+          region: ${{ env.AWS_REGION }}
+          # Tag with 'latest' AND the GitHub run number for traceability
+          tags: latest,${{ github.run_number }}
+          dockerfile: ./Dockerfile
+          context: ./
+
+  # ════════════════════════════════════════════════════════════════
+  # JOB 3 — DEPLOY TO EKS
+  # Deploys the Helm chart to the EKS cluster using the new image tag
+  # Only runs after BUILD_AND_PUBLISH job succeeds
+  # ════════════════════════════════════════════════════════════════
+  DeployToEKS:
+    needs: BUILD_AND_PUBLISH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Configure AWS credentials so we can call EKS + ECR
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Generate the kubeconfig file for kubectl/helm to authenticate to EKS
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER }}
+
+      # Create (or replace) the Kubernetes Docker registry secret
+      # This lets Kubernetes pull images from the private ECR repository
+      - name: Create/Update ECR Docker Registry Secret in Kubernetes
+        run: |
+          kubectl create secret docker-registry regcred \
+            --docker-server=${{ secrets.REGISTRY }} \
+            --docker-username=AWS \
+            --docker-password=$(aws ecr get-login-password --region ${{ env.AWS_REGION }}) \
+            --namespace=default \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # Deploy Helm chart to EKS, passing the new image tag dynamically
+      - name: Deploy Helm Chart to EKS
+        uses: bitovi/github-actions-deploy-eks-helm@v1.2.9
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          cluster-name: ${{ env.EKS_CLUSTER }}
+          # Path to the Helm chart directory
+          chart-path: helm/vprofilecharts
+          namespace: default
+          # Pass image URI and tag to Helm values; these replace {{ .Values.appimage }} etc.
+          values: |
+            appimage=${{ secrets.REGISTRY }}/${{ env.ECR_REPOSITORY }},apptag=${{ github.run_number }}
+          name: vprofile-stack

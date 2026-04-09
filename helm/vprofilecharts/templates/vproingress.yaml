@@ -1,0 +1,46 @@
+# ──────────────────────────────────────────────────────────────────
+# templates/vproingress.yaml — NGINX Ingress rule for the Vprofile app
+#
+# Traffic flow:
+#   Browser → Domain DNS CNAME → AWS NLB (created by NGINX Ingress Controller)
+#             → NGINX Ingress Controller → Service: my-app:8080
+#             → Pod (vpro-app label) → Tomcat container
+#
+# Prerequisites:
+#   1. NGINX Ingress Controller is deployed on the EKS cluster
+#      (done by the terraform.yml workflow after apply).
+#   2. A CNAME DNS record must point your subdomain to the NLB DNS name.
+#      Example: vprofile.yourdomain.com → <NLB_DNS>.elb.amazonaws.com
+# ──────────────────────────────────────────────────────────────────
+
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vproingress
+  namespace: default
+  labels:
+    app: vpro-app
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    managed-by: Helm
+  annotations:
+    # Ensure NGINX Ingress Controller picks up this Ingress resource
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # Optional: enforce HTTPS redirect in production
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  # Bind to the NGINX Ingress Controller deployed on the cluster
+  ingressClassName: {{ .Values.ingress.className }}
+
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.serviceName }}
+                port:
+                  number: {{ .Values.ingress.servicePort }}
+{{- end }}

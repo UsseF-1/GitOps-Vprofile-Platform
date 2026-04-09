@@ -1,0 +1,30 @@
+# ──────────────────────────────────────────────────────────────────
+# kubernetes/vproingress.yml
+# NGINX Ingress rule — standalone reference manifest.
+# In the GitOps pipeline, the Helm chart template is used instead.
+#
+# After applying, add a CNAME DNS record:
+#   vprofile.yourdomain.com → <NLB_DNS_NAME>.elb.amazonaws.com
+# ──────────────────────────────────────────────────────────────────
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vproingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    # IMPORTANT: Replace with your actual domain name
+    - host: vprofile.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-app
+                port:
+                  number: 8080

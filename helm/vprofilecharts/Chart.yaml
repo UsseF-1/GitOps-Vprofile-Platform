@@ -1,0 +1,35 @@
+# ──────────────────────────────────────────────────────────────────
+# Chart.yaml — Metadata for the Vprofile Helm chart.
+# Helm uses this file to identify and version the chart package.
+# ──────────────────────────────────────────────────────────────────
+
+apiVersion: v2
+
+# Name of the chart — used as a prefix for generated resource names
+name: vprofilecharts
+
+description: >
+  A Helm chart that deploys the full Vprofile Java application stack
+  on Kubernetes, including the application deployment, ClusterIP service,
+  and NGINX Ingress routing rule.
+
+# 'application' chart type means this deploys workloads (not other charts)
+type: application
+
+# Chart version — bump this when the chart structure itself changes
+version: 0.1.0
+
+# App version — reflects the application version being packaged
+# This is overridden at deploy time by the CI/CD pipeline
+appVersion: "1.0.0"
+
+keywords:
+  - vprofile
+  - java
+  - tomcat
+  - microservices
+  - gitops
+
+maintainers:
+  - name: DevOps Team
+    email: devops@vprofile.com
