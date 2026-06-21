@@ -1,7 +1,7 @@
 services:
   vprodb:
     build:
-      context: ./Docker-files/db
+      context: ./docker/db
 
     image: vprocontainers/vprofiledb:latest
 
@@ -19,7 +19,7 @@ services:
     image: memcached:latest
 
     container_name: vprocache01
-    
+
     ports:
       - "11211:11211"
 
@@ -37,7 +37,7 @@ services:
 
   vproapp:
     build:
-      context: ./Docker-files/app
+      context: ./docker/app
       
     image: vprocontainers/vprofileapp:latest
     
@@ -51,7 +51,7 @@ services:
 
   vproweb:
     build:
-      context: ./Docker-files/web
+      context: ./docker/web
 
     image: vprocontainers/vprofileweb:latest
 
