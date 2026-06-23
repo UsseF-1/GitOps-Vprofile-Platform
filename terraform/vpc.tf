@@ -1,7 +1,7 @@
 module "vpc" {
     source = "terraform-aws-modules/vpc/aws"
     version = "~> 5.8.0"
-    name = "depi_vpc"
+    name = "GitOps_vpc"
     cidr = "10.0.0.0/16"
 
     azs             = [var.zone1, var.zone2]
@@ -22,6 +22,6 @@ private_subnet_tags = {
 }
 
     tags = {
-        Name = "depi_vpc"
+        Name = "GitOps_vpc"
     }
 }

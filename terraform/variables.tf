@@ -15,5 +15,5 @@ variable "zone2" {
 
 variable "eks_name" {
     description = "Name of the EKS cluster"
-    default     = "depi_eks"
+    default     = "GitOps_eks"
 }
