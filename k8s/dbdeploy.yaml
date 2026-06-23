@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: vpro-db
-          image: ECR_URL
+          image: 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db
           imagePullPolicy: Always
 
           volumeMounts:

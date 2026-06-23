@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: vproapp
-          image: ECR_URL
+          image: 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app
           imagePullPolicy: Always
 
           ports:
