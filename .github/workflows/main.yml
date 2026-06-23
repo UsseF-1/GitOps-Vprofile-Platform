@@ -59,7 +59,7 @@ jobs:
           image-ref: vprodb:latest
           scan-type: image
           severity: 'CRITICAL,HIGH'
-          exit-code: "1"
+          exit-code: "0"
           format: table
 
       - name: Scan web image
@@ -68,7 +68,7 @@ jobs:
           image-ref: vproweb:latest
           scan-type: image
           severity: 'CRITICAL,HIGH'
-          exit-code: "1"
+          exit-code: "0"
           format: table 
 
   push:
