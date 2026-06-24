@@ -26,17 +26,17 @@ output "cluster_endpoint" {
 }
 
 # ─── ECR ────────────────────────────────────────────
-output "ecr_app_url" {
-    description = "ECR URL for app image"
-    value       = aws_ecr_repository.app.repository_url
-}
+# output "ecr_app_url" {
+#     description = "ECR URL for app image"
+#     value       = aws_ecr_repository.app.repository_url
+# }
 
-output "ecr_db_url" {
-    description = "ECR URL for db image"
-    value       = aws_ecr_repository.db.repository_url
-}
+# output "ecr_db_url" {
+#     description = "ECR URL for db image"
+#     value       = aws_ecr_repository.db.repository_url
+# }
 
-output "ecr_web_url" {
-    description = "ECR URL for web image"
-    value       = aws_ecr_repository.web.repository_url
-}
+# output "ecr_web_url" {
+#     description = "ECR URL for web image"
+#     value       = aws_ecr_repository.web.repository_url
+# }
