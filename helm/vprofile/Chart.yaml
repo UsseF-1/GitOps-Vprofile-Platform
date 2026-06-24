@@ -1,0 +1,15 @@
+apiVersion: v2
+name: vprofile
+description: Production-ready Helm chart for the Vprofile Java application stack (App + MySQL + Memcached + RabbitMQ + NGINX Ingress)
+type: application
+version: 1.0.0
+appVersion: "latest"
+keywords:
+  - vprofile
+  - java
+  - mysql
+  - memcached
+  - rabbitmq
+maintainers:
+  - name: platform-team
+    email: platform@example.com

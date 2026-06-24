@@ -1,0 +1,116 @@
+# ──────────────────────────────────────────────
+# Global
+# ──────────────────────────────────────────────
+namespace: default
+
+# ──────────────────────────────────────────────
+# Vprofile App (Tomcat / Java WAR)
+# ──────────────────────────────────────────────
+app:
+  replicaCount: 1
+
+  image:
+    repository: 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app
+    tag: latest
+    pullPolicy: Always
+
+  containerPort: 8080
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  resources: {}
+  #   requests:
+  #     cpu: 250m
+  #     memory: 512Mi
+  #   limits:
+  #     cpu: 500m
+  #     memory: 1Gi
+
+# ──────────────────────────────────────────────
+# MySQL Database
+# ──────────────────────────────────────────────
+db:
+  replicaCount: 1
+
+  image:
+    repository: 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db
+    tag: latest
+    pullPolicy: Always
+
+  containerPort: 3306
+  database: accounts
+
+  service:
+    type: ClusterIP
+    port: 3306
+
+  # PersistentVolumeClaim
+  pvc:
+    storageClassName: gp2
+    accessMode: ReadWriteOnce
+    size: 3Gi
+
+  resources: {}
+
+# ──────────────────────────────────────────────
+# Memcached
+# ──────────────────────────────────────────────
+memcached:
+  replicaCount: 1
+
+  image:
+    repository: memcached
+    tag: latest
+    pullPolicy: Always
+
+  containerPort: 11211
+
+  service:
+    type: ClusterIP
+    port: 11211
+
+  resources: {}
+
+# ──────────────────────────────────────────────
+# RabbitMQ
+# ──────────────────────────────────────────────
+rabbitmq:
+  replicaCount: 1
+
+  image:
+    repository: rabbitmq
+    tag: latest
+    pullPolicy: Always
+
+  containerPort: 5672
+  defaultUser: guest
+
+  service:
+    type: ClusterIP
+    port: 5672
+
+  resources: {}
+
+# ──────────────────────────────────────────────
+# Secrets  (base64-encoded values)
+# Override at install time — never commit real values
+# ──────────────────────────────────────────────
+secrets:
+  # echo -n "vprodbpass" | base64
+  dbPassword: dnByb2RicGFzcw==
+  # echo -n "guest" | base64
+  rmqPassword: Z3Vlc3Q=
+
+# ──────────────────────────────────────────────
+# Ingress
+# ──────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: nginx
+  host: vprofile.local
+  path: /
+  pathType: Prefix
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"

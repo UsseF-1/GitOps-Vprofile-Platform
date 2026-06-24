@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # Name must stay "vprocache01" — referenced by the app config
+  name: vprocache01
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.memcached.service.type }}
+  selector:
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "memcached") | nindent 4 }}
+  ports:
+    - port: {{ .Values.memcached.service.port }}
+      targetPort: vpromc-port
+      protocol: TCP

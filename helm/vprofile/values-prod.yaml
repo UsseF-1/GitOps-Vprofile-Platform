@@ -1,0 +1,58 @@
+# ──────────────────────────────────────────────
+# Production environment overrides
+# Usage: helm upgrade --install vprofile ./vprofile -f values-prod.yaml \
+#          --set secrets.dbPassword=<base64> \
+#          --set secrets.rmqPassword=<base64> \
+#          --set app.image.tag=<run_number>
+# ──────────────────────────────────────────────
+
+namespace: production
+
+app:
+  replicaCount: 3
+  image:
+    # Override at deploy time: --set app.image.tag=<github_run_number>
+    tag: latest
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+db:
+  replicaCount: 1
+  image:
+    tag: latest
+  pvc:
+    size: 10Gi
+    storageClassName: gp3
+
+memcached:
+  replicaCount: 2
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+rabbitmq:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  host: vprofile.yourdomain.com

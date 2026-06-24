@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vprormq
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "rabbitmq") | nindent 4 }}
+spec:
+  replicas: {{ .Values.rabbitmq.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vprofile.selectorLabels" (dict "root" . "component" "rabbitmq") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vprofile.selectorLabels" (dict "root" . "component" "rabbitmq") | nindent 8 }}
+    spec:
+      containers:
+        - name: rabbitmq
+          image: "{{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag }}"
+          imagePullPolicy: {{ .Values.rabbitmq.image.pullPolicy }}
+          ports:
+            - name: vprormq-port
+              containerPort: {{ .Values.rabbitmq.containerPort }}
+          env:
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: rmq-pass
+            - name: RABBITMQ_DEFAULT_USER
+              value: {{ .Values.rabbitmq.defaultUser | quote }}
+          {{- with .Values.rabbitmq.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

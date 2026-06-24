@@ -1,0 +1,39 @@
+# ──────────────────────────────────────────────
+# Dev environment overrides
+# Usage: helm upgrade --install vprofile ./vprofile -f values-dev.yaml
+# ──────────────────────────────────────────────
+
+namespace: dev
+
+app:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+
+db:
+  replicaCount: 1
+  image:
+    tag: latest
+  pvc:
+    size: 1Gi
+
+memcached:
+  replicaCount: 1
+  image:
+    tag: latest
+
+rabbitmq:
+  replicaCount: 1
+  image:
+    tag: latest
+
+ingress:
+  enabled: true
+  host: vprofile.dev.local

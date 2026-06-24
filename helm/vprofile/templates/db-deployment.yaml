@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deploy
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "db") | nindent 4 }}
+spec:
+  replicas: {{ .Values.db.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vprofile.selectorLabels" (dict "root" . "component" "db") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vprofile.selectorLabels" (dict "root" . "component" "db") | nindent 8 }}
+    spec:
+      initContainers:
+        - name: busybox
+          image: busybox:latest
+          args: ["rm", "-rf", "/var/lib/mysql/lost+found"]
+          volumeMounts:
+            - name: vpro-db-data
+              mountPath: /var/lib/mysql
+      containers:
+        - name: vpro-db
+          image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
+          imagePullPolicy: {{ .Values.db.image.pullPolicy }}
+          ports:
+            - name: vprodb-port
+              containerPort: {{ .Values.db.containerPort }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: db-pass
+            - name: MYSQL_DATABASE
+              value: {{ .Values.db.database }}
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: vpro-db-data
+          {{- with .Values.db.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: vpro-db-data
+          persistentVolumeClaim:
+            claimName: db-pv-claim

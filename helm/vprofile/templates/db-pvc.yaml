@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pv-claim
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "db") | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.db.pvc.accessMode }}
+  storageClassName: {{ .Values.db.pvc.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.db.pvc.size }}

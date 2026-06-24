@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpromc
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "memcached") | nindent 4 }}
+spec:
+  replicas: {{ .Values.memcached.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vprofile.selectorLabels" (dict "root" . "component" "memcached") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vprofile.selectorLabels" (dict "root" . "component" "memcached") | nindent 8 }}
+    spec:
+      containers:
+        - name: memcached
+          image: "{{ .Values.memcached.image.repository }}:{{ .Values.memcached.image.tag }}"
+          imagePullPolicy: {{ .Values.memcached.image.pullPolicy }}
+          ports:
+            - name: vpromc-port
+              containerPort: {{ .Values.memcached.containerPort }}
+          {{- with .Values.memcached.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

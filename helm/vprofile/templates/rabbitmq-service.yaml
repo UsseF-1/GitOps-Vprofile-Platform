@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # Name must stay "vpromq01" — the app initContainer resolves this DNS name
+  name: vpromq01
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.rabbitmq.service.type }}
+  selector:
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "rabbitmq") | nindent 4 }}
+  ports:
+    - port: {{ .Values.rabbitmq.service.port }}
+      targetPort: vprormq-port
+      protocol: TCP

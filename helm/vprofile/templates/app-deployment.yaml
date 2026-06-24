@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vproapp
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "vprofile.labels" . | nindent 4 }}
+    {{- include "vprofile.selectorLabels" (dict "root" . "component" "app") | nindent 4 }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vprofile.selectorLabels" (dict "root" . "component" "app") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vprofile.selectorLabels" (dict "root" . "component" "app") | nindent 8 }}
+    spec:
+      # Wait for MySQL and RabbitMQ to be DNS-resolvable before starting the app
+      initContainers:
+        - name: init-db
+          image: busybox
+          command:
+            - sh
+            - -c
+            - >
+              until nslookup vprodb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local;
+              do echo waiting for vprodb; sleep 2; done
+        - name: init-rabbitmq
+          image: busybox
+          command:
+            - sh
+            - -c
+            - >
+              until nslookup vpromq01.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local;
+              do echo waiting for vpromq01; sleep 2; done
+      containers:
+        - name: vproapp
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: vproapp-port
+              containerPort: {{ .Values.app.containerPort }}
+          {{- with .Values.app.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
