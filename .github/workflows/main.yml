@@ -76,43 +76,52 @@ jobs:
     needs: build_and_scan
 
     steps:
-      - name: Code checkout
-        uses: actions/checkout@v4
+    - name: Code checkout
+      uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build App Image
-        run: docker build -t vproapp:latest -f docker/app/Dockerfile .
+    - name: Build App Image
+      run: docker build -t vproapp:latest -f docker/app/Dockerfile .
 
-      - name: Build DB Image
-        run: docker build -t vprodb:latest ./docker/db/
+    - name: Build DB Image
+      run: docker build -t vprodb:latest ./docker/db/
 
-      - name: Build Web Image
-        run: docker build -t vproweb:latest ./docker/web/
-      
-      - name: Tag Images
-        run: |
-          docker tag vproapp:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app:${{ github.sha }}
+    - name: Build Web Image
+      run: docker build -t vproweb:latest ./docker/web/
 
-          docker tag vprodb:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db:${{ github.sha }}
+    - name: Tag Images
+      run: |
 
-          docker tag vproweb:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-web:${{ github.sha }}
+        docker tag vproapp:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app:${{ github.sha }}
+        docker tag vproapp:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app:latest
 
-      - name: Push App Image
-        run: docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app:${{ github.sha }}
+        docker tag vprodb:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db:${{ github.sha }}
+        docker tag vprodb:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db:latest
 
-      - name: Push DB Image
-        run: docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db:${{ github.sha }}
+        docker tag vproweb:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-web:${{ github.sha }}
+        docker tag vproweb:latest 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-web:latest
 
-      - name: Push Web Image
-        run: docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-web:${{ github.sha }}
+    - name: Push App Images
+      run: |
+        docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app:${{ github.sha }}
+        docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-app:latest
 
+    - name: Push DB Images
+      run: |
+        docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db:${{ github.sha }}
+        docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-db:latest
+
+    - name: Push Web Images
+      run: |
+        docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-web:${{ github.sha }}
+        docker push 996818459618.dkr.ecr.us-east-1.amazonaws.com/vprofile-web:latest
