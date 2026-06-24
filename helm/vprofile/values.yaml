@@ -109,8 +109,6 @@ secrets:
 ingress:
   enabled: true
   className: nginx
-  host: vprofile.local
+  host: ""
   path: /
   pathType: Prefix
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
