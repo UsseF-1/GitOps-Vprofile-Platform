@@ -23,9 +23,9 @@ module "eks" {
         general = {
         instance_types = ["t3.medium"]
 
-        desired_size = 2
-        min_size     = 2
+        min_size     = 1
         max_size     = 3
+        desired_size = 2
         }
     }
 
