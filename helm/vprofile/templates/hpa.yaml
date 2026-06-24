@@ -4,20 +4,20 @@ kind: HorizontalPodAutoscaler
 metadata:
     name: vproapp-hpa
     namespace: {{ .Values.namespace }}
-    spec:
+spec:
     scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: vproapp
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vproapp
 
     minReplicas: {{ .Values.hpa.minReplicas }}
     maxReplicas: {{ .Values.hpa.maxReplicas }}
 
     metrics:
-        - type: Resource
+    - type: Resource
         resource:
-            name: cpu
-            target:
+        name: cpu
+        target:
             type: Utilization
             averageUtilization: {{ .Values.hpa.targetCPUUtilizationPercentage }}
 {{- end }}
